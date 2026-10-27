@@ -56,6 +56,11 @@ describe("calculateTripDays", () => {
 
   it("counts a closed trip up to its exit date regardless of today", () => {
     expect(calculateTripDays("2026-10-01", "2026-10-10", "2026-10-27")).toBe(10);
+    expect(calculateTripDays("2026-10-27", "2026-10-28", "2026-10-27")).toBe(2);
+  });
+
+  it("returns 0 for an open trip that starts after today", () => {
+    expect(calculateTripDays("2026-10-28", null, "2026-10-27")).toBe(0);
   });
 });
 
