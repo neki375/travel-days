@@ -1,37 +1,20 @@
-import type { CurrentTripResponse } from "@travel-days/shared";
-import { useEffect, useState } from "react";
-import { api } from "../lib/api";
-import { ApiError } from "../lib/api-client";
-import { countryFlag, countryName } from "../lib/countries";
-import { formatDate, formatDays } from "../lib/dates";
+import type { Trip } from "@travel-days/shared";
+import { useCallback, useState } from "react";
+import { CheckInPage } from "../features/check-in/CheckInPage";
+import { CheckOutPage } from "../features/check-out/CheckOutPage";
 import { getInitData } from "../lib/telegram";
+import { useBackButton } from "../lib/use-back-button";
+import { HomePage } from "../pages/HomePage";
 
-type State =
-  | { status: "loading" }
-  | { status: "ready"; data: CurrentTripResponse }
-  | { status: "error"; message: string };
+type Screen = { name: "home" } | { name: "check-in" } | { name: "check-out"; trip: Trip };
 
 export function App() {
-  const hasInitData = getInitData() !== "";
-  const [state, setState] = useState<State>({ status: "loading" });
+  const [screen, setScreen] = useState<Screen>({ name: "home" });
+  const goHome = useCallback(() => setScreen({ name: "home" }), []);
 
-  useEffect(() => {
-    if (!hasInitData) {
-      return;
-    }
-    let cancelled = false;
-    api
-      .getCurrentTrip()
-      .then((data) => !cancelled && setState({ status: "ready", data }))
-      .catch(
-        (error: unknown) => !cancelled && setState({ status: "error", message: errorText(error) }),
-      );
-    return () => {
-      cancelled = true;
-    };
-  }, [hasInitData]);
+  useBackButton(screen.name === "home" ? null : goHome);
 
-  if (!hasInitData) {
+  if (!getInitData()) {
     return (
       <div className="card">
         <h1>Travel Days</h1>
@@ -40,40 +23,17 @@ export function App() {
     );
   }
 
-  if (state.status === "loading") {
-    return <p className="hint">Загрузка…</p>;
+  switch (screen.name) {
+    case "home":
+      return (
+        <HomePage
+          onCheckIn={() => setScreen({ name: "check-in" })}
+          onCheckOut={(trip) => setScreen({ name: "check-out", trip })}
+        />
+      );
+    case "check-in":
+      return <CheckInPage onDone={goHome} onBack={goHome} />;
+    case "check-out":
+      return <CheckOutPage trip={screen.trip} onDone={goHome} onBack={goHome} />;
   }
-
-  if (state.status === "error") {
-    return (
-      <div className="card">
-        <p className="error">{state.message}</p>
-      </div>
-    );
-  }
-
-  const { trip } = state.data;
-  return (
-    <div className="card">
-      <h1>Travel Days</h1>
-      {trip ? (
-        <p>
-          {countryFlag(trip.country.code)} {countryName(trip.country.code, trip.country.name)}:{" "}
-          {formatDays(trip.days)} с {formatDate(trip.entryDate)}
-        </p>
-      ) : (
-        <p className="hint">Сейчас нет открытой поездки.</p>
-      )}
-    </div>
-  );
-}
-
-function errorText(error: unknown): string {
-  if (error instanceof ApiError && error.code === "UNAUTHORIZED") {
-    return "Сессия устарела. Закройте и снова откройте приложение.";
-  }
-  if (error instanceof ApiError && error.code === "NETWORK_ERROR") {
-    return "Нет соединения с сервером.";
-  }
-  return "Что-то пошло не так. Попробуйте ещё раз.";
 }
