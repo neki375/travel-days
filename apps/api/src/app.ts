@@ -2,6 +2,8 @@ import Fastify, { type FastifyServerOptions } from "fastify";
 import type { Database } from "./db/client";
 import { systemClock, type Clock } from "./lib/clock";
 import { countriesRoutes } from "./modules/countries/countries.routes";
+import { statisticsRoutes } from "./modules/statistics/statistics.routes";
+import { createStatisticsService } from "./modules/statistics/statistics.service";
 import { tripsRoutes } from "./modules/trips/trips.routes";
 import { createTripsService } from "./modules/trips/trips.service";
 import { registerAuth } from "./plugins/auth";
@@ -26,6 +28,7 @@ export function buildApp({ db, auth, clock = systemClock, logger = false }: AppD
   app.get("/health", () => ({ status: "ok" }));
 
   const tripsService = createTripsService(db);
+  const statisticsService = createStatisticsService(db);
 
   void app.register(
     async (api) => {
@@ -33,6 +36,7 @@ export function buildApp({ db, auth, clock = systemClock, logger = false }: AppD
       registerTimeZone(api);
       await api.register(countriesRoutes, { db });
       await api.register(tripsRoutes, { tripsService, clock });
+      await api.register(statisticsRoutes, { statisticsService, clock });
     },
     { prefix: "/api/v1" },
   );
