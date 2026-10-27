@@ -12,6 +12,17 @@
   --separator: color-mix(in srgb, var(--hint) 25%, transparent);
   --radius: 12px;
 
+  /* Data colors do not follow the theme: some clients send a gray button color (Telegram for
+     macOS), which would make the day scale gray. One blue hue, validated as an ordinal ramp
+     (dataviz validate_palette.js --ordinal) against #fff; the dark set below against #1c1c1e,
+     #212121, #17212b and #000. Steps 1–4 follow the day scale; the accent marks a highlight
+     and the bars of the country list. */
+  --data-1: #86b6ef;
+  --data-2: #5598e7;
+  --data-3: #256abf;
+  --data-4: #104281;
+  --data-accent: #2a78d6;
+
   color-scheme: light dark;
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -25,6 +36,26 @@
     --secondary-bg: var(--tg-theme-secondary-bg-color, #2c2c2e);
     --text: var(--tg-theme-text-color, #ffffff);
     --hint: var(--tg-theme-hint-color, #98989f);
+  }
+}
+
+/* Inside Telegram the theme's own scheme decides (data-theme, set in main.tsx); in a plain
+   browser there is no attribute and the system preference does. */
+:root[data-theme="dark"] {
+  --data-1: #1c5cab;
+  --data-2: #3987e5;
+  --data-3: #6da7ec;
+  --data-4: #b7d3f6;
+  --data-accent: #3987e5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --data-1: #1c5cab;
+    --data-2: #3987e5;
+    --data-3: #6da7ec;
+    --data-4: #b7d3f6;
+    --data-accent: #3987e5;
   }
 }
 
@@ -390,7 +421,7 @@ h2 {
   display: block;
   height: 100%;
   border-radius: 0 4px 4px 0;
-  background: var(--button);
+  background: var(--data-accent);
 }
 
 @media (forced-colors: active) {
@@ -464,10 +495,7 @@ h2 {
   aspect-ratio: 2 / 1;
 }
 
-/* Sequential scale: one hue, validated as an ordinal ramp against the light (#fff) and dark
-   (#1c1c1e) surfaces: steps 1–3 are the button color at 55/78/100% over the surface, step 4
-   mixes it with the text color (darker on light, lighter on dark). Without color-mix support
-   step 4 falls back to step 3; the legend and the list still give exact values. */
+/* Sequential scale: the --data-1…4 ramp (see :root), darker on light and lighter on dark. */
 .map-shape,
 .map-swatch {
   fill: var(--hint);
@@ -483,26 +511,25 @@ h2 {
 
 .map-shape.bin-1,
 .map-dot.bin-1 .map-dot-mark {
-  fill: var(--button);
-  fill-opacity: 0.55;
+  fill: var(--data-1);
+  fill-opacity: 1;
 }
 
 .map-shape.bin-2,
 .map-dot.bin-2 .map-dot-mark {
-  fill: var(--button);
-  fill-opacity: 0.78;
+  fill: var(--data-2);
+  fill-opacity: 1;
 }
 
 .map-shape.bin-3,
 .map-dot.bin-3 .map-dot-mark {
-  fill: var(--button);
+  fill: var(--data-3);
   fill-opacity: 1;
 }
 
 .map-shape.bin-4,
 .map-dot.bin-4 .map-dot-mark {
-  fill: var(--button);
-  fill: color-mix(in srgb, var(--button) 68%, var(--text));
+  fill: var(--data-4);
   fill-opacity: 1;
 }
 
@@ -589,7 +616,7 @@ h2 {
 
 .map-shape.highlighted,
 .map-dot.highlighted .map-dot-mark {
-  fill: var(--button);
+  fill: var(--data-accent);
   fill-opacity: 1;
 }
 
@@ -617,23 +644,22 @@ h2 {
 }
 
 .map-swatch.bin-1 {
-  background: var(--button);
-  opacity: 0.55;
+  background: var(--data-1);
+  opacity: 1;
 }
 
 .map-swatch.bin-2 {
-  background: var(--button);
-  opacity: 0.78;
+  background: var(--data-2);
+  opacity: 1;
 }
 
 .map-swatch.bin-3 {
-  background: var(--button);
+  background: var(--data-3);
   opacity: 1;
 }
 
 .map-swatch.bin-4 {
-  background: var(--button);
-  background: color-mix(in srgb, var(--button) 68%, var(--text));
+  background: var(--data-4);
   opacity: 1;
 }
 

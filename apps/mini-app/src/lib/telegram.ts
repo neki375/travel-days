@@ -8,6 +8,7 @@ export interface TelegramWebApp {
   colorScheme: "light" | "dark";
   ready(): void;
   expand(): void;
+  onEvent(eventType: "themeChanged", eventHandler: () => void): void;
   BackButton: {
     show(): void;
     hide(): void;
@@ -37,6 +38,23 @@ export function getWebApp(): TelegramWebApp | undefined {
 /** The SDK script is also loaded in a regular browser; only a Telegram launch has initData. */
 export function isInsideTelegram(): boolean {
   return Boolean(getWebApp()?.initData);
+}
+
+/**
+ * Mirrors Telegram's color scheme to <html data-theme>, so CSS can pick colors that the theme
+ * does not provide (the data palette), and keeps it in sync when the user switches themes.
+ * Outside Telegram nothing is set and CSS follows the system preference.
+ */
+export function syncColorScheme(): void {
+  const webApp = getWebApp();
+  if (!isInsideTelegram() || !webApp) {
+    return;
+  }
+  const apply = () => {
+    document.documentElement.dataset.theme = webApp.colorScheme;
+  };
+  apply();
+  webApp.onEvent("themeChanged", apply);
 }
 
 /**
