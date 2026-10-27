@@ -45,6 +45,14 @@ cloudflared tunnel --url http://localhost:5173   # выдаст https://<сло�
 
 Vite пропускает только домены туннелей из `server.allowedHosts` в `apps/mini-app/vite.config.ts` (`*.trycloudflare.com`, `*.ngrok-free.app`).
 
+## Данные карты
+
+Контуры стран и точки для маленьких стран лежат в `apps/mini-app/src/features/map/*.json` и сгенерированы из Natural Earth (`world-atlas`). Пересобрать их нужно только после изменения справочника стран:
+
+```bash
+npm run generate:map -w @travel-days/mini-app
+```
+
 ## Проверки
 
 ```bash

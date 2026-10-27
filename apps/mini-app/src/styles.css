@@ -402,3 +402,157 @@ h2 {
 .stats-note {
   padding: 0 4px;
 }
+
+/* World map */
+
+.world-map {
+  margin: 0 0 12px;
+  padding: 12px;
+}
+
+.world-map svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.world-map-placeholder {
+  aspect-ratio: 2 / 1;
+}
+
+/* Sequential scale: one hue, validated as an ordinal ramp against the light (#fff) and dark
+   (#1c1c1e) surfaces: steps 1–3 are the button color at 55/78/100% over the surface, step 4
+   mixes it with the text color (darker on light, lighter on dark). Without color-mix support
+   step 4 falls back to step 3; the legend and the list still give exact values. */
+.map-shape,
+.map-swatch {
+  fill: var(--hint);
+  fill-opacity: 0.2;
+}
+
+.map-shape {
+  stroke: var(--bg);
+  stroke-width: 0.5;
+  vector-effect: non-scaling-stroke;
+  outline: none;
+}
+
+.map-shape.bin-1,
+.map-dot.bin-1 .map-dot-mark {
+  fill: var(--button);
+  fill-opacity: 0.55;
+}
+
+.map-shape.bin-2,
+.map-dot.bin-2 .map-dot-mark {
+  fill: var(--button);
+  fill-opacity: 0.78;
+}
+
+.map-shape.bin-3,
+.map-dot.bin-3 .map-dot-mark {
+  fill: var(--button);
+  fill-opacity: 1;
+}
+
+.map-shape.bin-4,
+.map-dot.bin-4 .map-dot-mark {
+  fill: var(--button);
+  fill: color-mix(in srgb, var(--button) 68%, var(--text));
+  fill-opacity: 1;
+}
+
+.map-shape[role="button"] {
+  cursor: pointer;
+}
+
+.map-shape:focus-visible,
+.map-shape-outline {
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+
+.map-shape-outline {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.map-dot {
+  cursor: pointer;
+  outline: none;
+}
+
+.map-dot-hit {
+  fill: transparent;
+}
+
+/* Surface ring keeps dots legible over neighbouring shapes. */
+.map-dot-mark {
+  stroke: var(--bg);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.map-dot-mark.selected,
+.map-dot:focus-visible .map-dot-mark {
+  stroke: var(--text);
+}
+
+.map-readout {
+  min-height: 1.4em;
+  margin: 8px 0 4px;
+  text-align: center;
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  font-size: 13px;
+}
+
+.map-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.map-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--hint);
+  opacity: 0.2;
+}
+
+.map-swatch.bin-1 {
+  background: var(--button);
+  opacity: 0.55;
+}
+
+.map-swatch.bin-2 {
+  background: var(--button);
+  opacity: 0.78;
+}
+
+.map-swatch.bin-3 {
+  background: var(--button);
+  opacity: 1;
+}
+
+.map-swatch.bin-4 {
+  background: var(--button);
+  background: color-mix(in srgb, var(--button) 68%, var(--text));
+  opacity: 1;
+}
+
+@media (forced-colors: active) {
+  .map-shape[role="button"],
+  .map-dot-mark {
+    fill: Highlight;
+  }
+}
