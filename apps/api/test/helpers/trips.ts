@@ -33,6 +33,27 @@ export function postCheckout(
   });
 }
 
+export function getTrips(app: FastifyInstance, query = "", as: RequestAs = {}) {
+  return app.inject({ method: "GET", url: `/api/v1/trips${query}`, headers: headers(as) });
+}
+
+export function getCurrentTrip(app: FastifyInstance, as: RequestAs = {}) {
+  return app.inject({ method: "GET", url: "/api/v1/trips/current", headers: headers(as) });
+}
+
+export function patchTrip(app: FastifyInstance, tripId: string, body: unknown, as: RequestAs = {}) {
+  return app.inject({
+    method: "PATCH",
+    url: `/api/v1/trips/${tripId}`,
+    headers: headers(as),
+    payload: body as object,
+  });
+}
+
+export function deleteTrip(app: FastifyInstance, tripId: string, as: RequestAs = {}) {
+  return app.inject({ method: "DELETE", url: `/api/v1/trips/${tripId}`, headers: headers(as) });
+}
+
 /** Creates a trip through the API and returns its id; fails the test on a non-201 response. */
 export async function createTrip(
   app: FastifyInstance,
