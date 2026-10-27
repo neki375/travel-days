@@ -1,13 +1,9 @@
+import type { CountryDays } from "@travel-days/shared";
 import { calculateDaysInPeriod, type Period } from "../trips/day-calculator";
 import type { DateSpan } from "../trips/trip-rules";
 
 export interface CountryTrip extends DateSpan {
   countryCode: string;
-}
-
-export interface CountryDays {
-  countryCode: string;
-  days: number;
 }
 
 export interface CountryStatistics {
