@@ -29,6 +29,15 @@ export function getWebApp(): TelegramWebApp | undefined {
   return window.Telegram?.WebApp;
 }
 
+/** The SDK script is also loaded in a regular browser; only a Telegram launch has initData. */
+export function isInsideTelegram(): boolean {
+  return Boolean(getWebApp()?.initData);
+}
+
+export function notifyHaptic(type: "error" | "success"): void {
+  getWebApp()?.HapticFeedback?.notificationOccurred(type);
+}
+
 /**
  * initData of the current launch. Outside Telegram it is empty; in development a value
  * signed by `npm run dev:init-data` is used instead, so the server check stays the same.
