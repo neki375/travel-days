@@ -5,3 +5,4 @@ package-lock.json
 apps/api/migrations/
 SPEC.md
 CLAUDE.md
+apps/mini-app/src/features/map/*.json

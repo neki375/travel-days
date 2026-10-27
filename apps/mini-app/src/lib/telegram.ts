@@ -14,6 +14,9 @@ export interface TelegramWebApp {
     onClick(callback: () => void): void;
     offClick(callback: () => void): void;
   };
+  /** Swipe-down-to-close gesture control; Bot API 7.7+, absent in older clients. */
+  disableVerticalSwipes?(): void;
+  enableVerticalSwipes?(): void;
   /** Native confirmation dialog; throws in clients older than Bot API 6.2. */
   showConfirm?(message: string, callback: (confirmed: boolean) => void): void;
   HapticFeedback?: {
@@ -34,6 +37,26 @@ export function getWebApp(): TelegramWebApp | undefined {
 /** The SDK script is also loaded in a regular browser; only a Telegram launch has initData. */
 export function isInsideTelegram(): boolean {
   return Boolean(getWebApp()?.initData);
+}
+
+/**
+ * Turns Telegram's swipe-down-to-close gesture off while the user drags content such as a
+ * zoomed map, and back on afterwards. No-op outside Telegram and in old clients.
+ */
+export function setVerticalSwipesEnabled(enabled: boolean): void {
+  const webApp = getWebApp();
+  if (!isInsideTelegram() || !webApp) {
+    return;
+  }
+  try {
+    if (enabled) {
+      webApp.enableVerticalSwipes?.();
+    } else {
+      webApp.disableVerticalSwipes?.();
+    }
+  } catch {
+    // Unsupported client version: the gesture simply stays as it is.
+  }
 }
 
 /** Asks the user to confirm, using Telegram's dialog when available. */

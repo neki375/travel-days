@@ -1,5 +1,5 @@
 import type { StatisticsResponse } from "@travel-days/shared";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { PageHeader } from "../../components/PageHeader";
 import { api } from "../../lib/api";
 import { countryFlag, countryName } from "../../lib/countries";
@@ -11,6 +11,9 @@ import {
   type CustomPeriod,
   type PeriodPreset,
 } from "../../lib/statistics-period";
+
+// Map shapes and d3-geo are loaded only when statistics are opened.
+const WorldMap = lazy(() => import("../map/WorldMap"));
 
 interface StatisticsPageProps {
   onBack: () => void;
@@ -124,6 +127,10 @@ function StatisticsView({ label, data }: { label: string; data: StatisticsRespon
           в {data.countries.length} {data.countries.length === 1 ? "стране" : "странах"}
         </p>
       </section>
+
+      <Suspense fallback={<div className="card world-map-placeholder" />}>
+        <WorldMap countries={data.countries} />
+      </Suspense>
 
       <ul className="card stats-list" aria-label="Дни по странам">
         {data.countries.map((item) => (
