@@ -1,12 +1,20 @@
 import type { CountryDays } from "@travel-days/shared";
-import type { FeatureCollection, Geometry } from "geojson";
+import type { Feature, FeatureCollection, Geometry, Polygon } from "geojson";
 import { geoEqualEarth, geoPath } from "d3-geo";
 import { useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
 import { countryFlag, countryName } from "../../lib/countries";
 import { formatDays } from "../../lib/dates";
-import { binSummary, countByBin, DAY_BINS, dayBin, NOT_VISITED } from "../../lib/map-scale";
+import { unionBounds, type Bounds } from "../../lib/map-fit";
+import {
+  binCountries,
+  binSummary,
+  countByBin,
+  DAY_BINS,
+  dayBin,
+  NOT_VISITED,
+} from "../../lib/map-scale";
 import pointsData from "./country-points.json";
 import { useMapZoom } from "./use-map-zoom";
 import worldData from "./world-110m.json";
@@ -29,10 +37,28 @@ const [[, top], [, bottom]] = pathGenerator.bounds(collection);
 const VIEW_TOP = Math.floor(top);
 const VIEW_HEIGHT = Math.ceil(bottom - top);
 const VIEW_BOX = `0 ${VIEW_TOP} ${WIDTH} ${VIEW_HEIGHT}`;
-const EXTENT: [[number, number], [number, number]] = [
+const EXTENT: Bounds = [
   [0, VIEW_TOP],
   [WIDTH, VIEW_TOP + VIEW_HEIGHT],
 ];
+
+/**
+ * Bounds of a country's largest part, so fitting the map to it ignores remote islands and
+ * overseas territories (French Guiana for France, Svalbard for Norway).
+ */
+function mainBounds(item: Feature<Geometry, CountryProperties>): Bounds {
+  if (item.geometry.type !== "MultiPolygon") {
+    return pathGenerator.bounds(item);
+  }
+  const parts = item.geometry.coordinates.map((coordinates): Polygon => ({
+    type: "Polygon",
+    coordinates,
+  }));
+  const largest = parts.reduce((best, part) =>
+    pathGenerator.area(part) > pathGenerator.area(best) ? part : best,
+  );
+  return pathGenerator.bounds(largest);
+}
 
 /** Shapes smaller than this (viewBox units², ~20px² on a phone) are hard to see and tap: add a dot. */
 const MIN_SHAPE_AREA = 150;
@@ -45,6 +71,7 @@ const SHAPES = collection.features.map((item, index) => ({
   name: item.properties.name,
   d: pathGenerator(item) ?? "",
   area: pathGenerator.area(item),
+  bounds: mainBounds(item),
 }));
 /** Every supported country has a point, so this is the size of the reference list. */
 const TOTAL_COUNTRIES = Object.keys(points).length;
@@ -57,6 +84,19 @@ const LEGEND = [
 const SHAPE_AREA = new Map(
   SHAPES.flatMap((shape) => (shape.code ? [[shape.code, shape.area]] : [])),
 );
+const SHAPE_BOUNDS = new Map(
+  SHAPES.flatMap((shape) => (shape.code ? [[shape.code, shape.bounds]] : [])),
+);
+
+/** Where a country is on the map: its shape, or its center point for territories without one. */
+function countryBounds(code: string): Bounds | null {
+  const bounds = SHAPE_BOUNDS.get(code);
+  if (bounds) {
+    return bounds;
+  }
+  const position = points[code] && projection(points[code]);
+  return position ? [position, position] : null;
+}
 
 interface WorldMapProps {
   countries: readonly CountryDays[];
@@ -99,15 +139,41 @@ export default function WorldMap({ countries }: WorldMapProps) {
   };
 
   const binCounts = useMemo(() => countByBin(countries, TOTAL_COUNTRIES), [countries]);
-  const dimmed = (bin: number) => (isolatedBin !== null && bin !== isolatedBin ? " dimmed" : "");
+  /** While a legend step is isolated, its countries are highlighted and the rest turn neutral. */
+  const emphasis = (bin: number) => {
+    if (isolatedBin === null) {
+      return "";
+    }
+    return bin === isolatedBin ? " highlighted" : " muted";
+  };
+  /** Visited countries of a day step, in the list order (most days first). */
+  const visitedCodesIn = (bin: number | null) =>
+    bin === null || bin === NOT_VISITED
+      ? []
+      : countries.filter((item) => dayBin(item.days) === bin).map((item) => item.countryCode);
+  const isolatedCodes = visitedCodesIn(isolatedBin);
+
+  const toggleBin = (bin: number) => {
+    const next = isolatedBin === bin ? null : bin;
+    setIsolatedBin(next);
+    setSelected(null);
+    // Bring the highlighted countries into view; "not visited" covers the whole world.
+    const boxes = visitedCodesIn(next).flatMap((code) => {
+      // Wrapped: flatMap would otherwise flatten the box itself into its two corners.
+      const bounds = countryBounds(code);
+      return bounds ? [bounds] : [];
+    });
+    zoom.fitTo(unionBounds(boxes));
+  };
 
   const selectedDays = selected ? (daysByCode.get(selected.code) ?? 0) : 0;
   const selectedShape = selected && SHAPES.find((shape) => shape.code === selected.code);
+  const highlightedShapes = SHAPES.filter(
+    (shape) => shape.code !== null && isolatedCodes.includes(shape.code),
+  );
 
   return (
-    <figure
-      className={isolatedBin === null ? "card world-map" : `card world-map isolate-${isolatedBin}`}
-    >
+    <figure className="card world-map">
       <div className="map-canvas">
         <svg
           ref={svgRef}
@@ -126,7 +192,7 @@ export default function WorldMap({ countries }: WorldMapProps) {
                 <path
                   key={shape.key}
                   d={shape.d}
-                  className={`map-shape bin-${dayBin(days)}${dimmed(dayBin(days))}`}
+                  className={`map-shape bin-${dayBin(days)}${emphasis(dayBin(days))}`}
                   tabIndex={visited ? 0 : undefined}
                   role={visited ? "button" : undefined}
                   aria-label={
@@ -145,7 +211,10 @@ export default function WorldMap({ countries }: WorldMapProps) {
               );
             })}
 
-            {/* Drawn again on top so the outline of the selected country is not covered. */}
+            {/* Outlines are drawn again on top so neighbouring shapes do not cover them. */}
+            {highlightedShapes.map((shape) => (
+              <path key={shape.key} d={shape.d} className="map-highlight-outline" />
+            ))}
             {selectedShape && <path d={selectedShape.d} className="map-shape-outline" />}
 
             {dots.map((dot) => {
@@ -153,7 +222,7 @@ export default function WorldMap({ countries }: WorldMapProps) {
               return (
                 <g
                   key={dot.code}
-                  className={`map-dot bin-${bin}${dimmed(bin)}`}
+                  className={`map-dot bin-${bin}${emphasis(bin)}`}
                   tabIndex={0}
                   role="button"
                   aria-label={`${countryName(dot.code)}: ${formatDays(daysByCode.get(dot.code) ?? 0)}`}
@@ -210,8 +279,15 @@ export default function WorldMap({ countries }: WorldMapProps) {
             {" — "}
             <strong>{selectedDays > 0 ? formatDays(selectedDays) : "не были в этот период"}</strong>
           </>
-        ) : isolatedBin !== null ? (
+        ) : isolatedBin === NOT_VISITED ? (
           <strong>{binSummary(isolatedBin, binCounts[isolatedBin] ?? 0)}</strong>
+        ) : isolatedBin !== null ? (
+          <strong>
+            {binCountries(
+              isolatedBin,
+              isolatedCodes.map((code) => `${countryFlag(code)} ${countryName(code)}`),
+            )}
+          </strong>
         ) : (
           <span className="hint">
             Нажмите на страну, чтобы увидеть число дней. Приблизить — двумя пальцами или «+».
@@ -227,7 +303,7 @@ export default function WorldMap({ countries }: WorldMapProps) {
             type="button"
             className="map-legend-item"
             aria-pressed={isolatedBin === item.bin}
-            onClick={() => setIsolatedBin(isolatedBin === item.bin ? null : item.bin)}
+            onClick={() => toggleBin(item.bin)}
           >
             <span className={`map-swatch bin-${item.bin}`} aria-hidden="true" />
             {item.label}

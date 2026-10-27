@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { binSummary, countByBin, dayBin, formatCountryCount } from "./map-scale";
+import { binCountries, binSummary, countByBin, dayBin, formatCountryCount } from "./map-scale";
 
 describe("dayBin", () => {
   it.each([
@@ -48,5 +48,20 @@ describe("binSummary", () => {
     expect(binSummary(2, 3)).toBe("8–30 дней: 3 страны");
     expect(binSummary(4, 1)).toBe("91+ дней: 1 страна");
     expect(binSummary(0, 245)).toBe("Не были: 245 стран");
+  });
+});
+
+describe("binCountries", () => {
+  it("lists up to five names in full", () => {
+    expect(binCountries(1, ["Таиланд"])).toBe("1–7 дней: Таиланд");
+    expect(binCountries(2, ["А", "Б", "В", "Г", "Д"])).toBe("8–30 дней: А, Б, В, Г, Д");
+  });
+
+  it("shortens longer lists with the number of the rest", () => {
+    expect(binCountries(3, ["А", "Б", "В", "Г", "Д", "Е"])).toBe("31–90 дней: А, Б, В, Г и ещё 2");
+  });
+
+  it("falls back to the count for an empty step", () => {
+    expect(binCountries(4, [])).toBe("91+ дней: 0 стран");
   });
 });

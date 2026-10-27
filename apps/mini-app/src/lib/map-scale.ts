@@ -52,8 +52,26 @@ export function formatCountryCount(count: number): string {
   return `${count} ${COUNTRY_FORMS[pluralRules.select(count)] ?? "стран"}`;
 }
 
+function binLabel(bin: number): string {
+  return bin === NOT_VISITED ? "Не были" : `${DAY_BINS[bin - 1]?.label ?? ""} дней`;
+}
+
 /** Readout for an isolated legend step: "8–30 дней: 3 страны", "Не были: 242 страны". */
 export function binSummary(bin: number, count: number): string {
-  const label = bin === NOT_VISITED ? "Не были" : `${DAY_BINS[bin - 1]?.label ?? ""} дней`;
-  return `${label}: ${formatCountryCount(count)}`;
+  return `${binLabel(bin)}: ${formatCountryCount(count)}`;
+}
+
+/** Longest list of names shown in full; longer lists end with "и ещё N". */
+const MAX_LISTED_NAMES = 5;
+
+/** Readout naming the countries of a step: "8–30 дней: Таиланд, Вьетнам и ещё 3". */
+export function binCountries(bin: number, names: readonly string[]): string {
+  if (names.length === 0) {
+    return binSummary(bin, 0);
+  }
+  if (names.length <= MAX_LISTED_NAMES) {
+    return `${binLabel(bin)}: ${names.join(", ")}`;
+  }
+  const listed = names.slice(0, MAX_LISTED_NAMES - 1);
+  return `${binLabel(bin)}: ${listed.join(", ")} и ещё ${names.length - listed.length}`;
 }

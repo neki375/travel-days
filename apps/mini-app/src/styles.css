@@ -579,14 +579,32 @@ h2 {
   font-weight: 600;
 }
 
-.map-shape.dimmed,
-.map-dot.dimmed {
-  opacity: 0.2;
+/* The other steps fall back to the neutral land color instead of fading out, so the map keeps
+   its shape in both themes; the chosen step gets the full accent and an outline drawn on top. */
+.map-shape.muted,
+.map-dot.muted .map-dot-mark {
+  fill: var(--hint);
+  fill-opacity: 0.2;
 }
 
-/* Isolating "not visited" makes those countries stand out instead of staying faint. */
-.world-map.isolate-0 .map-shape.bin-0 {
-  fill-opacity: 0.55;
+.map-shape.highlighted,
+.map-dot.highlighted .map-dot-mark {
+  fill: var(--button);
+  fill-opacity: 1;
+}
+
+/* "Not visited" stays gray, only stronger: the accent always means days spent there. */
+.map-shape.bin-0.highlighted {
+  fill: var(--hint);
+  fill-opacity: 0.6;
+}
+
+.map-highlight-outline {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
 }
 
 .map-swatch {
@@ -623,5 +641,10 @@ h2 {
   .map-shape[role="button"],
   .map-dot-mark {
     fill: Highlight;
+  }
+
+  .map-shape.muted,
+  .map-dot.muted .map-dot-mark {
+    fill: GrayText;
   }
 }
