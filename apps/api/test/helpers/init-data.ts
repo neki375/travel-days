@@ -2,6 +2,9 @@ import { buildDataCheckString, computeInitDataHash } from "../../src/lib/telegra
 
 export const TEST_BOT_TOKEN = "123456:TEST-token";
 
+/** Fixed "now" of integration tests: 2026-10-27 in UTC, already 2026-10-28 in UTC+14. */
+export const TEST_NOW = new Date("2026-10-27T12:00:00Z");
+
 export interface SignInitDataOptions {
   telegramId?: number;
   authDate?: Date;
@@ -12,7 +15,7 @@ export interface SignInitDataOptions {
 
 /** Builds initData signed the way Telegram signs it. */
 export function signInitData(options: SignInitDataOptions = {}): string {
-  const authDate = options.authDate ?? new Date();
+  const authDate = options.authDate ?? TEST_NOW;
   const fields = new Map<string, string>();
 
   const defaults: Record<string, string | undefined> = {

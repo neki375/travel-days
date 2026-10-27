@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createTestDatabase, resetUserData } from "../helpers/database";
 import { authHeaders, createTestApp } from "../helpers/app";
-import { signInitData } from "../helpers/init-data";
+import { TEST_NOW, signInitData } from "../helpers/init-data";
 
 const { db, pool } = createTestDatabase();
 const app = createTestApp(db);
@@ -28,7 +28,10 @@ describe("Telegram initData authorization", () => {
     ["unsigned data", { authorization: "tma user=%7B%22id%22%3A1%7D&auth_date=1" }],
     ["forged user", { authorization: `tma ${signInitData().replace("1001", "1002")}` }],
     ["another bot", { authorization: `tma ${signInitData({ botToken: "999:OTHER" })}` }],
-    ["expired data", authHeaders(1001, { authDate: new Date(Date.now() - 2 * 86_400_000) })],
+    [
+      "expired data",
+      authHeaders(1001, { authDate: new Date(TEST_NOW.getTime() - 2 * 86_400_000) }),
+    ],
   ])("rejects %s with 401 UNAUTHORIZED", async (_name, headers) => {
     const response = await app.inject({ method: "GET", url: protectedUrl, headers });
 

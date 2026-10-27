@@ -14,3 +14,6 @@ export function createDatabase(connectionString: string) {
 }
 
 export type Database = ReturnType<typeof createDatabase>["db"];
+export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+/** Anything that can run queries: the pool-backed database or an open transaction. */
+export type DbExecutor = Database | Transaction;

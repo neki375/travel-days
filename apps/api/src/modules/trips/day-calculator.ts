@@ -54,12 +54,19 @@ export function calculateDays(entryDate: string, exitDate: string): number {
   return difference + 1;
 }
 
-/** Days of a trip so far; an open trip (exitDate = null) is counted up to `today`. */
+/**
+ * Days of a trip so far; an open trip (exitDate = null) is counted up to `today`.
+ * An open trip that starts after `today` has 0 days: this happens when the entry was recorded
+ * in a time zone ahead of the viewer's.
+ */
 export function calculateTripDays(
   entryDate: string,
   exitDate: string | null,
   today: string,
 ): number {
+  if (exitDate === null && entryDate > today) {
+    return 0;
+  }
   return calculateDays(entryDate, exitDate ?? today);
 }
 
