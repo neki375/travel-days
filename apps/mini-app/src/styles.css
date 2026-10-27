@@ -463,7 +463,10 @@ h2 {
   fill-opacity: 1;
 }
 
-.map-shape[role="button"] {
+/* iOS Safari fires click only on elements it considers clickable: without cursor: pointer,
+   taps on unvisited countries and on the sea (which clears the selection) are ignored. */
+.world-map svg,
+.map-shape {
   cursor: pointer;
 }
 
