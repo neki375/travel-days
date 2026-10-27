@@ -21,20 +21,36 @@ export function localizeCountries(countries: readonly Country[]): LocalizedCount
     .sort((a, b) => a.localName.localeCompare(b.localName, "ru"));
 }
 
-/** Matches the Russian or English name by substring, or the exact ISO code. */
+/** Colloquial Russian names that differ from the official ones returned by Intl. */
+const ALIASES: Record<string, readonly string[]> = {
+  US: ["США", "Америка"],
+  GB: ["Англия", "Британия", "Шотландия"],
+  AE: ["Эмираты", "Объединённые Арабские Эмираты"],
+  NL: ["Голландия"],
+  CZ: ["Чешская Республика"],
+  KR: ["Южная Корея"],
+  KP: ["Северная Корея"],
+};
+
+/** Case-insensitive; й/и and ё/е are treated as equal ("Тайланд" finds "Таиланд"). */
+function normalize(value: string): string {
+  return value.trim().toLocaleLowerCase("ru").replaceAll("й", "и").replaceAll("ё", "е");
+}
+
+/** Matches the Russian, English or colloquial name by substring, or the exact ISO code. */
 export function filterCountries(
   countries: readonly LocalizedCountry[],
   search: string,
 ): LocalizedCountry[] {
-  const query = search.trim().toLocaleLowerCase("ru");
+  const query = normalize(search);
   if (!query) {
     return [...countries];
   }
   return countries.filter(
     (country) =>
-      country.localName.toLocaleLowerCase("ru").includes(query) ||
-      country.name.toLowerCase().includes(query) ||
-      country.code.toLowerCase() === query,
+      [country.localName, country.name, ...(ALIASES[country.code] ?? [])].some((name) =>
+        normalize(name).includes(query),
+      ) || country.code.toLowerCase() === query,
   );
 }
 

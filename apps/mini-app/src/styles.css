@@ -151,6 +151,21 @@ h2 {
   font: inherit;
 }
 
+/* iOS Safari gives date inputs an intrinsic min-width (they overflow narrow cards) and
+   collapses an empty one to a shorter box. */
+.input[type="date"] {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 48px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
 .checkbox {
   display: flex;
   align-items: center;
@@ -172,8 +187,20 @@ h2 {
 }
 
 .selected-country {
-  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--separator);
+  border-radius: 10px;
+  background: var(--secondary-bg);
   font-weight: 600;
+}
+
+.selected-country .link-button {
+  margin: 0;
+  font-weight: 400;
 }
 
 .country-list {
