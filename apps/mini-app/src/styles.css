@@ -410,11 +410,54 @@ h2 {
   padding: 12px;
 }
 
+.map-canvas {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
 .world-map svg {
   display: block;
   width: 100%;
   height: auto;
   -webkit-tap-highlight-color: transparent;
+  /* At 1× vertical swipes scroll the page and pinches reach the map; zoomed in, the map
+     takes every gesture so one finger pans it. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.world-map svg.zoomed {
+  touch-action: none;
+}
+
+.map-zoom-controls {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.map-zoom-controls button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--separator);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.map-zoom-controls button:disabled {
+  color: var(--hint);
+  cursor: default;
 }
 
 .world-map-placeholder {
