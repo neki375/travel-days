@@ -32,6 +32,19 @@ npm run dev:init-data -- 12345  # другой id
 
 Скрипт пишет `apps/mini-app/.env.development.local` (не коммитится). Подпись действует 24 часа; после этого перезапустите скрипт и Vite. Сервер проверяет такие данные так же, как настоящие — обхода авторизации нет.
 
+### Внутри Telegram
+
+Telegram открывает Mini App только по HTTPS. Для разработки поднимите туннель до Vite (при запущенных `dev:api` и `dev:mini-app`):
+
+```bash
+brew install cloudflared
+cloudflared tunnel --url http://localhost:5173   # выдаст https://<слова>.trycloudflare.com
+```
+
+В @BotFather: `/mybots` → бот → Bot Settings → Configure Mini App (или Menu Button) → вставить адрес туннеля. Приложение открывается кнопкой меню в чате с ботом и получает настоящий initData. Адрес быстрого туннеля меняется при каждом запуске `cloudflared` — обновите его в BotFather.
+
+Vite пропускает только домены туннелей из `server.allowedHosts` в `apps/mini-app/vite.config.ts` (`*.trycloudflare.com`, `*.ngrok-free.app`).
+
 ## Проверки
 
 ```bash
