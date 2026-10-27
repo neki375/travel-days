@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import { CheckInPage } from "../features/check-in/CheckInPage";
 import { CheckOutPage } from "../features/check-out/CheckOutPage";
 import { AddTripPage } from "../features/trip-history/AddTripPage";
+import { StatisticsPage } from "../features/statistics/StatisticsPage";
 import { EditTripPage } from "../features/trip-history/EditTripPage";
 import { HistoryPage } from "../features/trip-history/HistoryPage";
 import { getInitData } from "../lib/telegram";
@@ -15,7 +16,8 @@ type Screen =
   | { name: "check-out"; trip: Trip }
   | { name: "history" }
   | { name: "add-trip" }
-  | { name: "edit-trip"; trip: Trip };
+  | { name: "edit-trip"; trip: Trip }
+  | { name: "statistics" };
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ name: "home" });
@@ -46,6 +48,7 @@ export function App() {
           onCheckIn={() => setScreen({ name: "check-in" })}
           onCheckOut={(trip) => setScreen({ name: "check-out", trip })}
           onHistory={goHistory}
+          onStatistics={() => setScreen({ name: "statistics" })}
         />
       );
     case "check-in":
@@ -64,5 +67,7 @@ export function App() {
       return <AddTripPage onDone={goHistory} onBack={goHistory} />;
     case "edit-trip":
       return <EditTripPage trip={screen.trip} onDone={goHistory} onBack={goHistory} />;
+    case "statistics":
+      return <StatisticsPage onBack={goHome} />;
   }
 }
