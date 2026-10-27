@@ -19,6 +19,15 @@ export default defineConfig({
       },
       {
         test: {
+          name: "mini-app",
+          root: "apps/mini-app",
+          include: ["src/**/*.test.ts"],
+          // A zone west of UTC exposes `new Date("YYYY-MM-DD")` day shifts.
+          env: { TZ: "America/Los_Angeles" },
+        },
+      },
+      {
+        test: {
           name: "api-integration",
           root: "apps/api",
           include: ["test/**/*.test.ts"],

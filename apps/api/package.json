@@ -7,7 +7,8 @@
     "dev": "tsx watch --env-file-if-exists=../../.env src/server.ts",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx --env-file-if-exists=../../.env src/db/migrate-cli.ts"
+    "db:migrate": "tsx --env-file-if-exists=../../.env src/db/migrate-cli.ts",
+    "dev:init-data": "tsx --env-file-if-exists=../../.env scripts/dev-init-data.ts"
   },
   "dependencies": {
     "@travel-days/shared": "*",
