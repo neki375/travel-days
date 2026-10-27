@@ -9,6 +9,7 @@ interface HomePageProps {
   onCheckIn: () => void;
   onCheckOut: (trip: Trip) => void;
   onHistory: () => void;
+  onStatistics: () => void;
 }
 
 type State =
@@ -16,7 +17,7 @@ type State =
   | { status: "ready"; trip: Trip | null }
   | { status: "error"; message: string };
 
-export function HomePage({ onCheckIn, onCheckOut, onHistory }: HomePageProps) {
+export function HomePage({ onCheckIn, onCheckOut, onHistory, onStatistics }: HomePageProps) {
   const [state, setState] = useState<State>({ status: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -63,6 +64,9 @@ export function HomePage({ onCheckIn, onCheckOut, onHistory }: HomePageProps) {
       <nav className="card menu">
         <button type="button" className="menu-item" onClick={onHistory}>
           История поездок
+        </button>
+        <button type="button" className="menu-item" onClick={onStatistics}>
+          Статистика
         </button>
       </nav>
     </>

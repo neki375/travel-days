@@ -244,6 +244,10 @@ h2 {
   color: var(--hint);
 }
 
+.menu-item + .menu-item {
+  border-top: 1px solid var(--separator);
+}
+
 /* History */
 
 .add-trip {
@@ -279,4 +283,95 @@ h2 {
 
 .trip-dates {
   grid-column: 1 / -1;
+}
+
+/* Statistics */
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  padding: 2px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.segment {
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.segment[aria-pressed="true"] {
+  background: var(--button);
+  color: var(--button-text);
+  font-weight: 600;
+}
+
+.period-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stats-summary {
+  text-align: center;
+}
+
+.stats-total {
+  margin: 4px 0;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.stats-list {
+  padding: 4px 16px;
+  list-style: none;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 8px;
+  padding: 10px 0;
+}
+
+.stats-row + .stats-row {
+  border-top: 1px solid var(--separator);
+}
+
+.stats-days {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Single-series bar: one theme hue, thin, rounded only at the value end. Values are
+   always printed as text, so the bar never carries information on its own. */
+.stats-bar {
+  grid-column: 1 / -1;
+  display: block;
+  height: 8px;
+}
+
+.stats-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--button);
+}
+
+@media (forced-colors: active) {
+  .stats-bar > span {
+    background: CanvasText;
+  }
+}
+
+.stats-note {
+  padding: 0 4px;
 }
