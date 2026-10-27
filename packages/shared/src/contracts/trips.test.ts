@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { checkoutTripBodySchema, createTripBodySchema, isoDateSchema } from "./trips";
+import {
+  checkoutTripBodySchema,
+  createTripBodySchema,
+  isoDateSchema,
+  listTripsQuerySchema,
+  updateTripBodySchema,
+} from "./trips";
 
 describe("isoDateSchema", () => {
   it.each([
@@ -36,6 +42,37 @@ describe("createTripBodySchema", () => {
     ["numeric date", { countryCode: "PH", entryDate: 20261001 }],
   ])("rejects %s", (_name, body) => {
     expect(createTripBodySchema.safeParse(body).success).toBe(false);
+  });
+});
+
+describe("updateTripBodySchema", () => {
+  it.each([
+    [{ countryCode: "TH" }, true],
+    [{ exitDate: null }, true],
+    [{ entryDate: "2026-10-01", exitDate: "2026-10-05" }, true],
+    [{}, false],
+    [{ countryCode: undefined }, false],
+    [{ userId: "x", entryDate: "2026-10-01" }, false],
+  ])("%j → %s", (body, valid) => {
+    expect(updateTripBodySchema.safeParse(body).success).toBe(valid);
+  });
+});
+
+describe("listTripsQuerySchema", () => {
+  it("applies the default limit and coerces query strings", () => {
+    expect(listTripsQuerySchema.parse({})).toEqual({ limit: 50 });
+    expect(listTripsQuerySchema.parse({ limit: "10" })).toEqual({ limit: 10 });
+  });
+
+  it.each([
+    [{ limit: "0" }],
+    [{ limit: "101" }],
+    [{ limit: "1.5" }],
+    [{ from: "2026-10-10", to: "2026-10-01" }],
+    [{ country: "ph" }],
+    [{ userId: "x" }],
+  ])("rejects %j", (query) => {
+    expect(listTripsQuerySchema.safeParse(query).success).toBe(false);
   });
 });
 

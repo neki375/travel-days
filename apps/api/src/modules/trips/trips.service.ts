@@ -1,4 +1,11 @@
-import type { CreateTripInput, Trip } from "@travel-days/shared";
+import type {
+  CreateTripInput,
+  CurrentTripResponse,
+  ListTripsQuery,
+  ListTripsResponse,
+  Trip,
+  UpdateTripInput,
+} from "@travel-days/shared";
 import type { Database, Transaction } from "../../db/client";
 import { getPgError } from "../../lib/db-errors";
 import {
@@ -11,13 +18,17 @@ import {
 } from "../../lib/errors";
 import { calculateTripDays } from "./day-calculator";
 import { findConflict, validateTripDates, type DateSpan, type TripDatesIssue } from "./trip-rules";
+import { decodeTripsCursor, encodeTripsCursor } from "./trips.cursor";
 import {
   countryExists,
+  deleteUserTrip,
+  findOpenTrip,
   findTripsTouchingSpan,
   findUserTrip,
   insertTrip,
+  listUserTrips,
   lockUser,
-  setTripExitDate,
+  updateTrip,
   type TripRow,
 } from "./trips.repository";
 
@@ -53,12 +64,7 @@ export function createTripsService(db: Database) {
       assertValidDates(span, today);
 
       return inUserTransaction(userId, async (tx) => {
-        if (!(await countryExists(tx, input.countryCode))) {
-          throw validationError("Unknown country code", [
-            { path: "countryCode", message: "Unknown country code" },
-          ]);
-        }
-
+        await assertCountryExists(tx, input.countryCode);
         await assertNoConflicts(tx, userId, span);
 
         const tripId = await insertTrip(tx, { userId, countryCode: input.countryCode, ...span });
@@ -75,12 +81,79 @@ export function createTripsService(db: Database) {
 
         // Closing an open trip only shortens it, so it cannot create a new overlap.
         assertValidDates({ entryDate: trip.entryDate, exitDate }, today);
-        await setTripExitDate(tx, tripId, exitDate);
+        await updateTrip(tx, tripId, { exitDate });
 
         return toTrip({ ...trip, exitDate }, today);
       });
     },
+
+    /** Edits a trip; all date, country and overlap rules are re-checked against the result. */
+    async update(userId: string, tripId: string, input: UpdateTripInput, today: string) {
+      return inUserTransaction(userId, async (tx) => {
+        const trip = await requireUserTrip(tx, userId, tripId);
+        const next = {
+          countryCode: input.countryCode ?? trip.countryCode,
+          entryDate: input.entryDate ?? trip.entryDate,
+          exitDate: input.exitDate === undefined ? trip.exitDate : input.exitDate,
+        };
+
+        assertValidDates(next, today);
+        if (next.countryCode !== trip.countryCode) {
+          await assertCountryExists(tx, next.countryCode);
+        }
+        await assertNoConflicts(tx, userId, next, tripId);
+
+        await updateTrip(tx, tripId, next);
+        return toTrip(await requireUserTrip(tx, userId, tripId), today);
+      });
+    },
+
+    async delete(userId: string, tripId: string): Promise<void> {
+      // Removing a trip cannot break the open-trip or overlap rules, so no user lock is needed.
+      if (!(await deleteUserTrip(db, userId, tripId))) {
+        throw tripNotFound();
+      }
+    },
+
+    async list(userId: string, query: ListTripsQuery, today: string): Promise<ListTripsResponse> {
+      const after = query.cursor === undefined ? undefined : decodeTripsCursor(query.cursor);
+      if (after === null) {
+        throw validationError("Invalid cursor", [{ path: "cursor", message: "Invalid cursor" }]);
+      }
+
+      // One extra row tells whether another page exists.
+      const rows = await listUserTrips(db, userId, {
+        from: query.from,
+        to: query.to,
+        countryCode: query.country,
+        after,
+        limit: query.limit + 1,
+      });
+      const page = rows.slice(0, query.limit);
+      const last = page.at(-1);
+
+      return {
+        items: page.map((row) => toTrip(row, today)),
+        nextCursor:
+          rows.length > query.limit && last
+            ? encodeTripsCursor({ entryDate: last.entryDate, id: last.id })
+            : null,
+      };
+    },
+
+    async current(userId: string, today: string): Promise<CurrentTripResponse> {
+      const row = await findOpenTrip(db, userId);
+      return { trip: row ? toTrip(row, today) : null };
+    },
   };
+}
+
+async function assertCountryExists(tx: Transaction, countryCode: string): Promise<void> {
+  if (!(await countryExists(tx, countryCode))) {
+    throw validationError("Unknown country code", [
+      { path: "countryCode", message: "Unknown country code" },
+    ]);
+  }
 }
 
 async function assertNoConflicts(
