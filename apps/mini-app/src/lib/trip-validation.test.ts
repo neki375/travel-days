@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateEntry, validateExit } from "./trip-validation";
+import { validateEntry, validateExit, validateTrip } from "./trip-validation";
 
 const today = "2026-10-27";
 
@@ -13,6 +13,21 @@ describe("validateEntry", () => {
     ["PH", "1899-12-31", "Даты раньше 1900 года не поддерживаются."],
   ])("%s %j → %s", (countryCode, entryDate, expected) => {
     expect(validateEntry(countryCode, entryDate, today)).toBe(expected);
+  });
+});
+
+describe("validateTrip", () => {
+  it.each([
+    [{ countryCode: "PH", entryDate: "2026-10-01", exitDate: null }, null],
+    [{ countryCode: "PH", entryDate: "2026-10-01", exitDate: "2026-10-05" }, null],
+    [{ countryCode: null, entryDate: "2026-10-01", exitDate: null }, "Выберите страну."],
+    [
+      { countryCode: "PH", entryDate: "2026-10-05", exitDate: "2026-10-01" },
+      "Дата выезда не может быть раньше даты въезда.",
+    ],
+    [{ countryCode: "PH", entryDate: "2026-10-01", exitDate: "" }, "Укажите дату выезда."],
+  ])("%j → %s", (values, expected) => {
+    expect(validateTrip(values, today)).toBe(expected);
   });
 });
 

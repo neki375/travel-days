@@ -14,6 +14,8 @@ export interface TelegramWebApp {
     onClick(callback: () => void): void;
     offClick(callback: () => void): void;
   };
+  /** Native confirmation dialog; throws in clients older than Bot API 6.2. */
+  showConfirm?(message: string, callback: (confirmed: boolean) => void): void;
   HapticFeedback?: {
     notificationOccurred(type: "error" | "success" | "warning"): void;
   };
@@ -32,6 +34,20 @@ export function getWebApp(): TelegramWebApp | undefined {
 /** The SDK script is also loaded in a regular browser; only a Telegram launch has initData. */
 export function isInsideTelegram(): boolean {
   return Boolean(getWebApp()?.initData);
+}
+
+/** Asks the user to confirm, using Telegram's dialog when available. */
+export async function confirmAction(message: string): Promise<boolean> {
+  const webApp = getWebApp();
+  const showConfirm = webApp?.showConfirm?.bind(webApp);
+  if (isInsideTelegram() && showConfirm) {
+    try {
+      return await new Promise<boolean>((resolve) => showConfirm(message, resolve));
+    } catch {
+      // Older clients throw: fall back to the browser dialog.
+    }
+  }
+  return window.confirm(message);
 }
 
 export function notifyHaptic(type: "error" | "success"): void {

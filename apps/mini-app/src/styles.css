@@ -105,6 +105,12 @@ h2 {
   color: var(--link);
 }
 
+.button.destructive {
+  margin-top: 0;
+  background: none;
+  color: var(--destructive);
+}
+
 .link-button {
   padding: 0;
   margin-bottom: 8px;
@@ -143,6 +149,18 @@ h2 {
   background: var(--secondary-bg);
   color: var(--text);
   font: inherit;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--button);
 }
 
 /* Country picker */
@@ -203,4 +221,62 @@ h2 {
   margin: 8px 0 4px;
   font-size: 40px;
   font-weight: 700;
+}
+
+.menu {
+  padding: 0;
+}
+
+.menu-item {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-item::after {
+  content: "›";
+  float: right;
+  color: var(--hint);
+}
+
+/* History */
+
+.add-trip {
+  margin: 0 0 12px;
+}
+
+.trip-list {
+  padding: 0;
+  list-style: none;
+}
+
+.trip-list li + li {
+  border-top: 1px solid var(--separator);
+}
+
+.trip-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.trip-days {
+  font-weight: 600;
+}
+
+.trip-dates {
+  grid-column: 1 / -1;
 }
