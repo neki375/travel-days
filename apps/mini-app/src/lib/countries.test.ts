@@ -44,6 +44,33 @@ describe("filterCountries", () => {
   });
 });
 
+describe("filterCountries with colloquial spelling", () => {
+  const world = localizeCountries([
+    { code: "TH", name: "Thailand" },
+    { code: "TW", name: "Taiwan" },
+    { code: "US", name: "United States" },
+    { code: "GB", name: "United Kingdom" },
+    { code: "AE", name: "United Arab Emirates" },
+    { code: "NL", name: "Netherlands" },
+  ]);
+  const search = (query: string) => filterCountries(world, query).map((country) => country.code);
+
+  it.each([
+    ["тай", ["TH", "TW"]],
+    ["Тайланд", ["TH"]],
+    ["таиланд", ["TH"]],
+    ["тайвань", ["TW"]],
+    ["США", ["US"]],
+    ["америка", ["US"]],
+    ["англия", ["GB"]],
+    ["эмираты", ["AE"]],
+    ["объединенные", ["AE"]],
+    ["голландия", ["NL"]],
+  ])("%j → %j", (query, codes) => {
+    expect(search(query)).toEqual(codes);
+  });
+});
+
 describe("countryFlag", () => {
   it("builds a flag from regional indicators", () => {
     expect(countryFlag("PH")).toBe("🇵🇭");

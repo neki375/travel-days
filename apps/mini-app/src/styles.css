@@ -151,6 +151,21 @@ h2 {
   font: inherit;
 }
 
+/* iOS Safari gives date inputs an intrinsic min-width (they overflow narrow cards) and
+   collapses an empty one to a shorter box. */
+.input[type="date"] {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 48px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
 .checkbox {
   display: flex;
   align-items: center;
