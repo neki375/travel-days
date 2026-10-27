@@ -27,10 +27,34 @@ const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   timeZone: "UTC",
 });
 
+const shortDateFormatter = new Intl.DateTimeFormat("ru-RU", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+function toUtcDate(isoDate: string): Date {
+  const [year = 0, month = 1, day = 1] = isoDate.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
 /** "1 октября 2026 г." */
 export function formatDate(isoDate: string): string {
-  const [year = 0, month = 1, day = 1] = isoDate.split("-").map(Number);
-  return dateFormatter.format(new Date(Date.UTC(year, month - 1, day)));
+  return dateFormatter.format(toUtcDate(isoDate));
+}
+
+/** "1 окт. 2026 г." */
+export function formatShortDate(isoDate: string): string {
+  return shortDateFormatter.format(toUtcDate(isoDate));
+}
+
+/** "1 окт. 2026 г. — 10 окт. 2026 г.", "1 окт. 2026 г. — сейчас" or a single date. */
+export function formatDateRange(entryDate: string, exitDate: string | null): string {
+  if (exitDate === entryDate) {
+    return formatShortDate(entryDate);
+  }
+  return `${formatShortDate(entryDate)} — ${exitDate ? formatShortDate(exitDate) : "сейчас"}`;
 }
 
 const pluralRules = new Intl.PluralRules("ru-RU");

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatDays, localToday, startOfYear } from "./dates";
+import { formatDate, formatDateRange, formatDays, localToday, startOfYear } from "./dates";
 
 describe("formatDate", () => {
   it("formats in Russian without shifting the day", () => {
@@ -8,6 +8,16 @@ describe("formatDate", () => {
     expect(process.env.TZ).toBe("America/Los_Angeles");
     expect(formatDate("2026-10-01")).toBe("1 октября 2026 г.");
     expect(formatDate("2026-01-01")).toBe("1 января 2026 г.");
+  });
+});
+
+describe("formatDateRange", () => {
+  it.each([
+    ["2026-10-01", "2026-10-10", "1 окт. 2026 г. — 10 окт. 2026 г."],
+    ["2026-10-01", null, "1 окт. 2026 г. — сейчас"],
+    ["2026-10-01", "2026-10-01", "1 окт. 2026 г."],
+  ])("%s → %s = %s", (entryDate, exitDate, expected) => {
+    expect(formatDateRange(entryDate, exitDate)).toBe(expected);
   });
 });
 

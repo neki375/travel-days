@@ -8,6 +8,7 @@ import { errorMessage } from "../lib/errors";
 interface HomePageProps {
   onCheckIn: () => void;
   onCheckOut: (trip: Trip) => void;
+  onHistory: () => void;
 }
 
 type State =
@@ -15,7 +16,7 @@ type State =
   | { status: "ready"; trip: Trip | null }
   | { status: "error"; message: string };
 
-export function HomePage({ onCheckIn, onCheckOut }: HomePageProps) {
+export function HomePage({ onCheckIn, onCheckOut, onHistory }: HomePageProps) {
   const [state, setState] = useState<State>({ status: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -48,6 +49,34 @@ export function HomePage({ onCheckIn, onCheckOut }: HomePageProps) {
     // reloadKey: the retry button changes it to load again.
   }, [load, reloadKey]);
 
+  return (
+    <>
+      <CurrentTripCard
+        state={state}
+        onRetry={() => {
+          setState({ status: "loading" });
+          setReloadKey((key) => key + 1);
+        }}
+        onCheckIn={onCheckIn}
+        onCheckOut={onCheckOut}
+      />
+      <nav className="card menu">
+        <button type="button" className="menu-item" onClick={onHistory}>
+          История поездок
+        </button>
+      </nav>
+    </>
+  );
+}
+
+interface CurrentTripCardProps {
+  state: State;
+  onRetry: () => void;
+  onCheckIn: () => void;
+  onCheckOut: (trip: Trip) => void;
+}
+
+function CurrentTripCard({ state, onRetry, onCheckIn, onCheckOut }: CurrentTripCardProps) {
   if (state.status === "loading") {
     return <p className="hint">Загрузка…</p>;
   }
@@ -56,14 +85,7 @@ export function HomePage({ onCheckIn, onCheckOut }: HomePageProps) {
     return (
       <div className="card">
         <p className="error">{state.message}</p>
-        <button
-          type="button"
-          className="button secondary"
-          onClick={() => {
-            setState({ status: "loading" });
-            setReloadKey((key) => key + 1);
-          }}
-        >
+        <button type="button" className="button secondary" onClick={onRetry}>
           Повторить
         </button>
       </div>

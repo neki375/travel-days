@@ -27,6 +27,20 @@ export function validateExit(exitDate: string, entryDate: string, today: string)
   return null;
 }
 
+export interface TripFormValues {
+  countryCode: string | null;
+  entryDate: string;
+  /** null while the trip is still ongoing. */
+  exitDate: string | null;
+}
+
+export function validateTrip(values: TripFormValues, today: string): string | null {
+  return (
+    validateEntry(values.countryCode, values.entryDate, today) ??
+    (values.exitDate === null ? null : validateExit(values.exitDate, values.entryDate, today))
+  );
+}
+
 function validateDate(date: string, today: string, kind: "въезда" | "выезда"): string | null {
   if (!date) {
     return `Укажите дату ${kind}.`;
