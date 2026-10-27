@@ -172,8 +172,20 @@ h2 {
 }
 
 .selected-country {
-  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--separator);
+  border-radius: 10px;
+  background: var(--secondary-bg);
   font-weight: 600;
+}
+
+.selected-country .link-button {
+  margin: 0;
+  font-weight: 400;
 }
 
 .country-list {
