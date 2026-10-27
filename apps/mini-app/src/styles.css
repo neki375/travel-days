@@ -517,10 +517,33 @@ h2 {
   font-size: 13px;
 }
 
+/* Legend steps toggle isolation: the chosen step stays, the others are dimmed. */
 .map-legend-item {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--separator);
+  border-radius: 999px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.map-legend-item[aria-pressed="true"] {
+  border-color: var(--text);
+  font-weight: 600;
+}
+
+.map-shape.dimmed,
+.map-dot.dimmed {
+  opacity: 0.2;
+}
+
+/* Isolating "not visited" makes those countries stand out instead of staying faint. */
+.world-map.isolate-0 .map-shape.bin-0 {
+  fill-opacity: 0.55;
 }
 
 .map-swatch {

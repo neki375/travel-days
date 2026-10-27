@@ -6,7 +6,7 @@ import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
 import { countryFlag, countryName } from "../../lib/countries";
 import { formatDays } from "../../lib/dates";
-import { DAY_BINS, dayBin } from "../../lib/map-scale";
+import { binSummary, countByBin, DAY_BINS, dayBin, NOT_VISITED } from "../../lib/map-scale";
 import pointsData from "./country-points.json";
 import worldData from "./world-110m.json";
 
@@ -39,6 +39,14 @@ const SHAPES = collection.features.map((item, index) => ({
   d: pathGenerator(item) ?? "",
   area: pathGenerator.area(item),
 }));
+/** Every supported country has a point, so this is the size of the reference list. */
+const TOTAL_COUNTRIES = Object.keys(points).length;
+
+const LEGEND = [
+  ...DAY_BINS.map((bin, index) => ({ bin: index + 1, label: bin.label })),
+  { bin: NOT_VISITED, label: "не были" },
+];
+
 const SHAPE_AREA = new Map(
   SHAPES.flatMap((shape) => (shape.code ? [[shape.code, shape.area]] : [])),
 );
@@ -49,6 +57,8 @@ interface WorldMapProps {
 
 export default function WorldMap({ countries }: WorldMapProps) {
   const [selected, setSelected] = useState<{ code: string; name: string } | null>(null);
+  // Legend step whose countries are highlighted; the others are dimmed.
+  const [isolatedBin, setIsolatedBin] = useState<number | null>(null);
   const daysByCode = useMemo(
     () => new Map(countries.map((item) => [item.countryCode, item.days])),
     [countries],
@@ -76,11 +86,16 @@ export default function WorldMap({ countries }: WorldMapProps) {
     }
   };
 
+  const binCounts = useMemo(() => countByBin(countries, TOTAL_COUNTRIES), [countries]);
+  const dimmed = (bin: number) => (isolatedBin !== null && bin !== isolatedBin ? " dimmed" : "");
+
   const selectedDays = selected ? (daysByCode.get(selected.code) ?? 0) : 0;
   const selectedShape = selected && SHAPES.find((shape) => shape.code === selected.code);
 
   return (
-    <figure className="card world-map">
+    <figure
+      className={isolatedBin === null ? "card world-map" : `card world-map isolate-${isolatedBin}`}
+    >
       <svg
         viewBox={VIEW_BOX}
         role="group"
@@ -94,7 +109,7 @@ export default function WorldMap({ countries }: WorldMapProps) {
             <path
               key={shape.key}
               d={shape.d}
-              className={`map-shape bin-${dayBin(days)}`}
+              className={`map-shape bin-${dayBin(days)}${dimmed(dayBin(days))}`}
               tabIndex={visited ? 0 : undefined}
               role={visited ? "button" : undefined}
               aria-label={
@@ -116,28 +131,31 @@ export default function WorldMap({ countries }: WorldMapProps) {
         {/* Drawn again on top so the outline of the selected country is not covered. */}
         {selectedShape && <path d={selectedShape.d} className="map-shape-outline" />}
 
-        {dots.map((dot) => (
-          <g
-            key={dot.code}
-            className={`map-dot bin-${dayBin(daysByCode.get(dot.code) ?? 0)}`}
-            tabIndex={0}
-            role="button"
-            aria-label={`${countryName(dot.code)}: ${formatDays(daysByCode.get(dot.code) ?? 0)}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              select(dot.code, dot.code);
-            }}
-            onKeyDown={onKey(dot.code)}
-          >
-            <circle className="map-dot-hit" cx={dot.x} cy={dot.y} r={DOT_HIT_RADIUS} />
-            <circle
-              className={selected?.code === dot.code ? "map-dot-mark selected" : "map-dot-mark"}
-              cx={dot.x}
-              cy={dot.y}
-              r={DOT_RADIUS}
-            />
-          </g>
-        ))}
+        {dots.map((dot) => {
+          const bin = dayBin(daysByCode.get(dot.code) ?? 0);
+          return (
+            <g
+              key={dot.code}
+              className={`map-dot bin-${bin}${dimmed(bin)}`}
+              tabIndex={0}
+              role="button"
+              aria-label={`${countryName(dot.code)}: ${formatDays(daysByCode.get(dot.code) ?? 0)}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                select(dot.code, dot.code);
+              }}
+              onKeyDown={onKey(dot.code)}
+            >
+              <circle className="map-dot-hit" cx={dot.x} cy={dot.y} r={DOT_HIT_RADIUS} />
+              <circle
+                className={selected?.code === dot.code ? "map-dot-mark selected" : "map-dot-mark"}
+                cx={dot.x}
+                cy={dot.y}
+                r={DOT_RADIUS}
+              />
+            </g>
+          );
+        })}
       </svg>
 
       <p className="map-readout" aria-live="polite">
@@ -147,6 +165,8 @@ export default function WorldMap({ countries }: WorldMapProps) {
             {" — "}
             <strong>{selectedDays > 0 ? formatDays(selectedDays) : "не были в этот период"}</strong>
           </>
+        ) : isolatedBin !== null ? (
+          <strong>{binSummary(isolatedBin, binCounts[isolatedBin] ?? 0)}</strong>
         ) : (
           <span className="hint">Нажмите на страну, чтобы увидеть число дней</span>
         )}
@@ -154,16 +174,18 @@ export default function WorldMap({ countries }: WorldMapProps) {
 
       <figcaption className="map-legend">
         <span className="hint">Дней в стране:</span>
-        {DAY_BINS.map((bin, index) => (
-          <span key={bin.label} className="map-legend-item">
-            <span className={`map-swatch bin-${index + 1}`} aria-hidden="true" />
-            {bin.label}
-          </span>
+        {LEGEND.map((item) => (
+          <button
+            key={item.label}
+            type="button"
+            className="map-legend-item"
+            aria-pressed={isolatedBin === item.bin}
+            onClick={() => setIsolatedBin(isolatedBin === item.bin ? null : item.bin)}
+          >
+            <span className={`map-swatch bin-${item.bin}`} aria-hidden="true" />
+            {item.label}
+          </button>
         ))}
-        <span className="map-legend-item">
-          <span className="map-swatch bin-0" aria-hidden="true" />
-          не были
-        </span>
       </figcaption>
     </figure>
   );
